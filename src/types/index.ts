@@ -1,15 +1,70 @@
-export interface AssignmentTemplate {
-  code: string; // e.g. "A01", "A02", "A03", "A04"
+export type ThemeMode = 'light' | 'dark';
+
+export type ViewMode = 'code' | 'diagram' | 'guide' | 'roadmap';
+
+export interface UmlAttribute {
+  name: string;
+  type: string;
+  visibility: '+' | '-' | '#'; // + public, - private, # protected
+}
+
+export interface UmlMethod {
+  name: string;
+  parameters: string;
+  returnType: string;
+  visibility: '+' | '-' | '#';
+  isAbstract?: boolean;
+}
+
+export interface UmlClassNode {
+  id: string;
+  name: string;
+  stereotype?: 'class' | 'abstract' | 'interface';
+  attributes: UmlAttribute[];
+  methods: UmlMethod[];
+}
+
+export interface UmlRelationship {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  type: 'inheritance' | 'realization' | 'association' | 'composition' | 'aggregation';
+  label?: string;
+}
+
+export interface UmlDiagramData {
+  title: string;
+  nodes: UmlClassNode[];
+  relationships: UmlRelationship[];
+}
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+export interface CurriculumModule {
+  code: string;
+  pillar: string; // e.g. "Basics", "Encapsulation", "Abstraction", "Inheritance", "Polymorphism", "Association", "Interfaces"
   title: string;
   subtitle: string;
-  learningObjectives: string[];
-  instructions: string[];
-  submissionChecklist: string[];
+  analogy: string;
+  summary: string;
+  keyTakeaways: string[];
   starterCode: {
     cpp: string;
     java: string;
     python: string;
   };
+  expectedOutput: {
+    cpp: string;
+    java: string;
+    python: string;
+  };
+  diagram: UmlDiagramData;
+  quiz: QuizQuestion[];
 }
 
 export interface SavedSubmissionMeta {
@@ -32,13 +87,19 @@ export interface ParsedSubmission {
   };
 }
 
-export type ThemeMode = 'light' | 'dark';
-
 export interface ToastMessage {
   id: string;
   type: 'success' | 'error' | 'info';
   title: string;
   description?: string;
+}
+
+export interface ExecutionResult {
+  lang: 'cpp' | 'java' | 'python';
+  stdout: string;
+  stderr?: string;
+  executionTimeMs: number;
+  status: 'success' | 'error';
 }
 
 declare global {

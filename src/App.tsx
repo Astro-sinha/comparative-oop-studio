@@ -4,10 +4,14 @@ import { Sidebar } from './components/Sidebar';
 import { AssignmentOverview } from './components/AssignmentOverview';
 import { EditorContainer } from './components/EditorContainer';
 import { SubmissionPreviewModal } from './components/SubmissionPreviewModal';
+import { VisualDiagramPanel } from './components/VisualDiagramPanel';
+import { ConceptGuidePanel } from './components/ConceptGuidePanel';
+import { PillarsRoadmap } from './components/PillarsRoadmap';
+import { OutputConsole } from './components/OutputConsole';
 import { Toast } from './components/Toast';
 
-import { ASSIGNMENT_TEMPLATES } from './data/templates';
-import { ThemeMode, SavedSubmissionMeta, ToastMessage } from './types';
+import { CURRICULUM_MODULES } from './data/curriculum';
+import { ThemeMode, ViewMode, SavedSubmissionMeta, ToastMessage, ExecutionResult } from './types';
 import { 
   saveLocalDraft, 
   loadLocalDraft, 
@@ -25,6 +29,7 @@ import {
   writeSubmissionFile 
 } from './utils/fileSystem';
 import { serializeSubmission, parseSubmission } from './utils/markdownParser';
+import { runCodeSnippet } from './utils/codeRunner';
 
 export const App: React.FC = () => {
   // Theme state
@@ -34,15 +39,25 @@ export const App: React.FC = () => {
   const [workspacePath, setWorkspacePath] = useState<string>(() => loadSavedWorkspace());
   const [rollNumber, setRollNumber] = useState<string>(() => loadSavedRollNumber());
 
-  // Active Assignment state
-  const [selectedTemplateCode, setSelectedTemplateCode] = useState<string>('A01');
-  const activeTemplate = ASSIGNMENT_TEMPLATES.find((t) => t.code === selectedTemplateCode) || ASSIGNMENT_TEMPLATES[0];
+  // Active View Mode (Code, Diagram, Guide, Roadmap)
+  const [viewMode, setViewMode] = useState<ViewMode>('code');
+
+  // Active Module state
+  const [selectedModuleCode, setSelectedModuleCode] = useState<string>('M01');
+  const activeModule = CURRICULUM_MODULES.find((m) => m.code === selectedModuleCode) || CURRICULUM_MODULES[0];
 
   // Code Panel states
   const [code, setCode] = useState<{ cpp: string; java: string; python: string }>({
-    cpp: activeTemplate.starterCode.cpp,
-    java: activeTemplate.starterCode.java,
-    python: activeTemplate.starterCode.python,
+    cpp: activeModule.starterCode.cpp,
+    java: activeModule.starterCode.java,
+    python: activeModule.starterCode.python,
+  });
+
+  // Code Execution Results
+  const [executionResults, setExecutionResults] = useState<Record<'cpp' | 'java' | 'python', ExecutionResult | null>>({
+    cpp: null,
+    java: null,
+    python: null,
   });
 
   // Task Checklist state
@@ -66,7 +81,7 @@ export const App: React.FC = () => {
     python: 'saved' | 'saving' | 'dirty';
   }>({ cpp: 'saved', java: 'saved', python: 'saved' });
 
-  // Sync theme attribute to document element
+  // Sync theme attribute
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     saveSavedTheme(theme);
@@ -78,7 +93,7 @@ export const App: React.FC = () => {
     saveSavedRollNumber(val);
   };
 
-  // Toast notification helper
+  // Toast helper
   const addToast = (type: 'success' | 'error' | 'info', title: string, description?: string) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, title, description }]);
@@ -101,36 +116,36 @@ export const App: React.FC = () => {
     refreshWorkspaceSubmissions();
   }, [workspacePath, refreshWorkspaceSubmissions]);
 
-  // Load draft or template on assignment change
-  const handleSelectTemplate = (templateCode: string) => {
-    setSelectedTemplateCode(templateCode);
-    const tpl = ASSIGNMENT_TEMPLATES.find((t) => t.code === templateCode) || ASSIGNMENT_TEMPLATES[0];
-    const draft = loadLocalDraft(templateCode);
+  // Load draft or template on module change
+  const handleSelectModule = (moduleCode: string) => {
+    setSelectedModuleCode(moduleCode);
+    const mod = CURRICULUM_MODULES.find((m) => m.code === moduleCode) || CURRICULUM_MODULES[0];
+    const draft = loadLocalDraft(moduleCode);
 
     if (draft) {
       setCode(draft);
-      addToast('info', `Loaded local draft for ${templateCode}`);
+      addToast('info', `Loaded local draft for ${moduleCode}`);
     } else {
       setCode({
-        cpp: tpl.starterCode.cpp,
-        java: tpl.starterCode.java,
-        python: tpl.starterCode.python,
+        cpp: mod.starterCode.cpp,
+        java: mod.starterCode.java,
+        python: mod.starterCode.python,
       });
     }
+
+    // Reset execution outputs
+    setExecutionResults({ cpp: null, java: null, python: null });
   };
 
-  // Handle Code Change with Auto-Save draft debounce
+  // Handle Code Change with Auto-Save
   const handleCodeChange = (lang: 'cpp' | 'java' | 'python', newContent: string) => {
     setCode((prev) => {
       const nextCode = { ...prev, [lang]: newContent };
-      // Save local draft
-      saveLocalDraft(selectedTemplateCode, nextCode);
+      saveLocalDraft(selectedModuleCode, nextCode);
       return nextCode;
     });
 
     setAutoSaveStatus((prev) => ({ ...prev, [lang]: 'dirty' }));
-    
-    // Simulate auto-save completion indicator
     setTimeout(() => {
       setAutoSaveStatus((prev) => ({ ...prev, [lang]: 'saved' }));
     }, 1200);
@@ -140,9 +155,24 @@ export const App: React.FC = () => {
   const handleResetCode = (lang: 'cpp' | 'java' | 'python') => {
     setCode((prev) => ({
       ...prev,
-      [lang]: activeTemplate.starterCode[lang],
+      [lang]: activeModule.starterCode[lang],
     }));
     addToast('info', `Reset ${lang.toUpperCase()} starter code`);
+  };
+
+  // Run Code Execution Handler
+  const handleRunCode = () => {
+    const cppRes = runCodeSnippet('cpp', code.cpp, activeModule.expectedOutput.cpp);
+    const javaRes = runCodeSnippet('java', code.java, activeModule.expectedOutput.java);
+    const pyRes = runCodeSnippet('python', code.python, activeModule.expectedOutput.python);
+
+    setExecutionResults({
+      cpp: cppRes,
+      java: javaRes,
+      python: pyRes,
+    });
+
+    addToast('success', 'Executed C++, Java & Python code', 'Outputs displayed below in execution console.');
   };
 
   // Choose Workspace folder
@@ -157,19 +187,19 @@ export const App: React.FC = () => {
 
   // Reset assignment to fresh state
   const handleNewAssignment = () => {
-    const tpl = ASSIGNMENT_TEMPLATES[0];
-    setSelectedTemplateCode(tpl.code);
+    const mod = CURRICULUM_MODULES[0];
+    setSelectedModuleCode(mod.code);
     setCode({
-      cpp: tpl.starterCode.cpp,
-      java: tpl.starterCode.java,
-      python: tpl.starterCode.python,
+      cpp: mod.starterCode.cpp,
+      java: mod.starterCode.java,
+      python: mod.starterCode.python,
     });
-    addToast('info', 'Started new assignment', `Loaded ${tpl.title}`);
+    setExecutionResults({ cpp: null, java: null, python: null });
+    addToast('info', 'Started Intro Module', `Loaded ${mod.title}`);
   };
 
   // Save Submission Handler
   const handleSaveSubmission = async () => {
-    // 1. Validation checks
     if (!rollNumber.trim()) {
       addToast('error', 'Roll Number Required', 'Please enter your roll number in the top header before saving.');
       return;
@@ -186,21 +216,14 @@ export const App: React.FC = () => {
       saveSavedWorkspace(currentWorkspace);
     }
 
-    if (!code.cpp.trim() || !code.java.trim() || !code.python.trim()) {
-      addToast('error', 'Incomplete Code Panels', 'All three code panels (C++, Java, Python) must contain code solutions before submitting.');
-      return;
-    }
-
-    // 2. Generate submission markdown content & filename
-    const filename = `${rollNumber.trim()}_${activeTemplate.code}.md`;
+    const filename = `${rollNumber.trim()}_${activeModule.code}.md`;
     const markdownContent = serializeSubmission(
       rollNumber,
-      activeTemplate.code,
-      activeTemplate.title,
+      activeModule.code,
+      activeModule.title,
       code
     );
 
-    // 3. Write file to workspace
     const res = await writeSubmissionFile(currentWorkspace, filename, markdownContent);
 
     if (res.success) {
@@ -224,19 +247,13 @@ export const App: React.FC = () => {
       handleRollNumberChange(parsed.rollNumber);
     }
     if (parsed.assignmentCode) {
-      const matchTpl = ASSIGNMENT_TEMPLATES.find((t) => t.code === parsed.assignmentCode);
-      if (matchTpl) {
-        setSelectedTemplateCode(matchTpl.code);
+      const matchMod = CURRICULUM_MODULES.find((m) => m.code === parsed.assignmentCode);
+      if (matchMod) {
+        setSelectedModuleCode(matchMod.code);
       }
     }
     setCode(parsed.code);
     addToast('success', 'Loaded Saved Submission', submission.filename);
-  };
-
-  // Toggle Task Checklist item
-  const handleToggleTask = (taskIndex: number) => {
-    const key = `${activeTemplate.code}_${taskIndex}`;
-    setCheckedTasks((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   // Calculate completion ratio
@@ -250,34 +267,33 @@ export const App: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         handleSaveSubmission();
-      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'o') {
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') {
         e.preventDefault();
-        handleChooseWorkspace();
-      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'n') {
-        e.preventDefault();
-        handleNewAssignment();
+        handleRunCode();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSaveSubmission, handleChooseWorkspace, handleNewAssignment]);
+  }, [handleSaveSubmission, handleRunCode]);
 
   return (
     <div className="app-container">
-      {/* Top Header */}
+      {/* Top Navigation Header */}
       <Header
-        assignmentTitle={activeTemplate.title}
-        assignmentCode={activeTemplate.code}
+        assignmentTitle={activeModule.title}
+        assignmentCode={activeModule.code}
         rollNumber={rollNumber}
         onRollNumberChange={handleRollNumberChange}
         theme={theme}
         onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         onSaveSubmission={handleSaveSubmission}
         onOpenPreview={() => setIsPreviewOpen(true)}
-        completedRatio={{ completed: completedCount, total: 3 }}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onRunCode={handleRunCode}
       />
 
-      {/* Main Body */}
+      {/* Main App Body */}
       <div className="main-body">
         {/* Sidebar */}
         <Sidebar
@@ -285,9 +301,9 @@ export const App: React.FC = () => {
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           workspacePath={workspacePath}
           onChooseWorkspace={handleChooseWorkspace}
-          templates={ASSIGNMENT_TEMPLATES}
-          selectedTemplateCode={selectedTemplateCode}
-          onSelectTemplate={handleSelectTemplate}
+          modules={CURRICULUM_MODULES}
+          selectedModuleCode={selectedModuleCode}
+          onSelectModule={handleSelectModule}
           savedSubmissions={savedSubmissions}
           onSelectSubmission={handleSelectSavedSubmission}
           onRefreshWorkspace={refreshWorkspaceSubmissions}
@@ -298,34 +314,63 @@ export const App: React.FC = () => {
           }
         />
 
-        {/* Main Content Area */}
+        {/* Dynamic View Content Area */}
         <main className="content-area">
-          {/* Assignment Instructions Card */}
-          <AssignmentOverview
-            assignment={activeTemplate}
-            checkedTasks={checkedTasks}
-            onToggleTask={handleToggleTask}
-          />
+          {viewMode === 'code' && (
+            <>
+              {/* Module Banner */}
+              <div className="module-banner-card">
+                <div className="banner-top-row">
+                  <span className="banner-pillar-badge">{activeModule.pillar}</span>
+                  <span className="banner-code">{activeModule.code}</span>
+                </div>
+                <h2 className="banner-title">{activeModule.title}</h2>
+                <p className="banner-subtitle">{activeModule.subtitle}</p>
+              </div>
 
-          {/* Resizable 3-Pane Code Editors */}
-          <EditorContainer
-            code={code}
-            onCodeChange={handleCodeChange}
-            onResetCode={handleResetCode}
-            visibility={visibility}
-            theme={theme}
-            autoSaveStatus={autoSaveStatus}
-          />
+              {/* Side-by-Side 3-Pane Code Editors */}
+              <EditorContainer
+                code={code}
+                onCodeChange={handleCodeChange}
+                onResetCode={handleResetCode}
+                visibility={visibility}
+                theme={theme}
+                autoSaveStatus={autoSaveStatus}
+              />
+
+              {/* Live Execution Console Panel */}
+              <OutputConsole results={executionResults} visibility={visibility} />
+            </>
+          )}
+
+          {viewMode === 'diagram' && (
+            <VisualDiagramPanel diagram={activeModule.diagram} />
+          )}
+
+          {viewMode === 'guide' && (
+            <ConceptGuidePanel module={activeModule} />
+          )}
+
+          {viewMode === 'roadmap' && (
+            <PillarsRoadmap
+              modules={CURRICULUM_MODULES}
+              selectedCode={selectedModuleCode}
+              onSelectModule={(code) => {
+                handleSelectModule(code);
+                setViewMode('code');
+              }}
+            />
+          )}
         </main>
       </div>
 
-      {/* Submission Preview & Export Modal */}
+      {/* Submission Preview Modal */}
       <SubmissionPreviewModal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         rollNumber={rollNumber}
-        assignmentCode={activeTemplate.code}
-        assignmentTitle={activeTemplate.title}
+        assignmentCode={activeModule.code}
+        assignmentTitle={activeModule.title}
         code={code}
         onSaveAndExport={handleSaveSubmission}
       />
