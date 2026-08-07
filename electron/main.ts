@@ -20,20 +20,33 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    show: false,
+    show: true, // Open window immediately
   });
 
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    const devUrl = 'http://localhost:5173';
+    mainWindow.loadURL(devUrl).catch((err) => {
+      console.log('Retrying URL load...', err);
+      setTimeout(() => {
+        mainWindow?.loadURL(devUrl);
+      }, 1500);
+    });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
+  // Handle load failure gracefully
+  mainWindow.webContents.on('did-fail-load', () => {
+    if (isDev) {
+      setTimeout(() => {
+        mainWindow?.loadURL('http://localhost:5173');
+      }, 1000);
+    }
   });
+
+  mainWindow.focus();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

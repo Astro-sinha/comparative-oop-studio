@@ -10,7 +10,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "build:electron": "tsc && vite build && tsc -p tsconfig.electron.json",
-    "dev:electron": "concurrently \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "dev:electron": "tsc -p tsconfig.electron.json && concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
     "package:mac": "npm run build:electron && electron-builder --mac",
     "package:win": "npm run build:electron && electron-builder --win"
   },
@@ -28,7 +28,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "^43.3.0",
+    "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
