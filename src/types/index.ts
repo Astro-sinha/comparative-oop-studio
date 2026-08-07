@@ -1,6 +1,6 @@
 export type ThemeMode = 'light' | 'dark';
 
-export type ViewMode = 'code' | 'diagram' | 'guide' | 'roadmap';
+export type ViewMode = 'code' | 'diagram' | 'guide' | 'roadmap' | 'memory';
 
 export interface UmlAttribute {
   name: string;

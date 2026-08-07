@@ -6,6 +6,7 @@ import { EditorContainer } from './components/EditorContainer';
 import { SubmissionPreviewModal } from './components/SubmissionPreviewModal';
 import { VisualDiagramPanel } from './components/VisualDiagramPanel';
 import { ConceptGuidePanel } from './components/ConceptGuidePanel';
+import { MemoryVisualizerPanel } from './components/MemoryVisualizerPanel';
 import { PillarsRoadmap } from './components/PillarsRoadmap';
 import { OutputConsole } from './components/OutputConsole';
 import { Toast } from './components/Toast';
@@ -30,6 +31,7 @@ import {
 } from './utils/fileSystem';
 import { serializeSubmission, parseSubmission } from './utils/markdownParser';
 import { runCodeSnippet } from './utils/codeRunner';
+import { exportSubmissionToPdf } from './utils/pdfExport';
 
 export const App: React.FC = () => {
   // Theme state
@@ -39,7 +41,7 @@ export const App: React.FC = () => {
   const [workspacePath, setWorkspacePath] = useState<string>(() => loadSavedWorkspace());
   const [rollNumber, setRollNumber] = useState<string>(() => loadSavedRollNumber());
 
-  // Active View Mode (Code, Diagram, Guide, Roadmap)
+  // Active View Mode (Code, Diagram, Guide, Roadmap, Memory)
   const [viewMode, setViewMode] = useState<ViewMode>('code');
 
   // Active Module state
@@ -133,7 +135,6 @@ export const App: React.FC = () => {
       });
     }
 
-    // Reset execution outputs
     setExecutionResults({ cpp: null, java: null, python: null });
   };
 
@@ -173,6 +174,12 @@ export const App: React.FC = () => {
     });
 
     addToast('success', 'Executed C++, Java & Python code', 'Outputs displayed below in execution console.');
+  };
+
+  // Export PDF Report
+  const handleExportPdf = () => {
+    exportSubmissionToPdf(rollNumber, activeModule.code, activeModule.title, code);
+    addToast('info', 'Opening PDF Printable Report...');
   };
 
   // Choose Workspace folder
@@ -256,11 +263,6 @@ export const App: React.FC = () => {
     addToast('success', 'Loaded Saved Submission', submission.filename);
   };
 
-  // Calculate completion ratio
-  const completedCount = ['cpp', 'java', 'python'].filter(
-    (lang) => code[lang as 'cpp' | 'java' | 'python'].trim().length > 0
-  ).length;
-
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -287,6 +289,7 @@ export const App: React.FC = () => {
         theme={theme}
         onToggleTheme={() => setTheme(theme === 'light' ? 'dark' : 'light')}
         onSaveSubmission={handleSaveSubmission}
+        onExportPdf={handleExportPdf}
         onOpenPreview={() => setIsPreviewOpen(true)}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -349,6 +352,10 @@ export const App: React.FC = () => {
 
           {viewMode === 'guide' && (
             <ConceptGuidePanel module={activeModule} />
+          )}
+
+          {viewMode === 'memory' && (
+            <MemoryVisualizerPanel module={activeModule} />
           )}
 
           {viewMode === 'roadmap' && (

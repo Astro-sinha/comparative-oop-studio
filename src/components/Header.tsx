@@ -5,9 +5,11 @@ import {
   Workflow, 
   BookOpen, 
   Compass, 
+  Cpu, 
   Play, 
   Save, 
   Eye, 
+  Printer, 
   Sun, 
   Moon, 
   GraduationCap 
@@ -21,6 +23,7 @@ interface HeaderProps {
   theme: ThemeMode;
   onToggleTheme: () => void;
   onSaveSubmission: () => void;
+  onExportPdf: () => void;
   onOpenPreview: () => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
@@ -35,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   theme,
   onToggleTheme,
   onSaveSubmission,
+  onExportPdf,
   onOpenPreview,
   viewMode,
   onViewModeChange,
@@ -80,6 +84,14 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
+          className={`mode-tab-btn ${viewMode === 'memory' ? 'active' : ''}`}
+          onClick={() => onViewModeChange('memory')}
+        >
+          <Cpu size={16} />
+          <span>Memory Layout</span>
+        </button>
+
+        <button
           className={`mode-tab-btn ${viewMode === 'roadmap' ? 'active' : ''}`}
           onClick={() => onViewModeChange('roadmap')}
         >
@@ -107,6 +119,12 @@ export const Header: React.FC<HeaderProps> = ({
         <button className="btn-action btn-run" onClick={onRunCode} title="Execute & Compare Output">
           <Play size={16} fill="currentColor" />
           <span>Run Output</span>
+        </button>
+
+        {/* Export PDF Button */}
+        <button className="btn-action btn-secondary" onClick={onExportPdf} title="Export PDF Lab Report">
+          <Printer size={16} />
+          <span>Export PDF</span>
         </button>
 
         {/* Preview Modal */}

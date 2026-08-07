@@ -111,14 +111,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem 0 82px; /* 82px left padding reserves space for macOS traffic light buttons */
+  padding: 0 1.25rem 0 82px;
   gap: 1rem;
   z-index: 20;
   box-shadow: var(--shadow-sm);
-  -webkit-app-region: drag; /* Allows dragging the app window */
+  -webkit-app-region: drag;
 }
 
-/* Make interactive controls clickable without dragging window */
 .mode-tab-group, .header-actions, .brand-group {
   -webkit-app-region: no-drag;
 }
@@ -517,7 +516,7 @@ body {
 }
 
 /* Visual Diagram Component */
-.diagram-container-card {
+.diagram-container-card, .memory-container-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -528,24 +527,29 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.diagram-header {
+.diagram-header, .memory-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.diagram-title-group {
+.diagram-title-group, .memory-title-group {
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
 
-.diagram-title {
+.diagram-title, .memory-title {
   font-size: 1.1rem;
   font-weight: 700;
 }
 
-.diagram-badge {
+.memory-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.diagram-badge, .memory-badge {
   font-size: 0.72rem;
   font-weight: 600;
   padding: 4px 10px;
@@ -555,12 +559,143 @@ body {
   border: 1px solid var(--burgundy-border);
 }
 
-.diagram-viewport {
-  display: flex;
-  flex-direction: column;
+/* Memory Visualizer Styles */
+.memory-architecture-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 }
 
+.memory-zone-box {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.zone-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zone-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.zone-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.stack-frame-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.frame-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--burgundy-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 4px;
+}
+
+.stack-var-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  background-color: var(--bg-subtle);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.pointer-arrow-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--accent-blue);
+}
+
+.heap-objects-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.heap-object-card {
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--accent-green);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.heap-obj-header {
+  background-color: rgba(16, 185, 129, 0.15);
+  padding: 6px 10px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'Fira Code', monospace;
+}
+
+.heap-fields-table {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heap-field-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+}
+
+.memory-comparison-banner {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.banner-heading {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.lang-mem-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.lang-mem-card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+
+.l-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--burgundy-primary); }
+.l-text { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; }
+
+/* Visual Diagram Component */
 .uml-nodes-grid {
   display: flex;
   flex-wrap: wrap;
