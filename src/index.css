@@ -103,18 +103,24 @@ body {
   overflow: hidden;
 }
 
-/* Header Navbar */
+/* Header Navbar with macOS Traffic Lights & Drag Support */
 .header-nav {
-  height: 60px;
+  height: 64px;
   background-color: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
+  padding: 0 1.25rem 0 82px; /* 82px left padding reserves space for macOS traffic light buttons */
   gap: 1rem;
   z-index: 20;
   box-shadow: var(--shadow-sm);
+  -webkit-app-region: drag; /* Allows dragging the app window */
+}
+
+/* Make interactive controls clickable without dragging window */
+.mode-tab-group, .header-actions, .brand-group {
+  -webkit-app-region: no-drag;
 }
 
 .brand-group {
@@ -124,8 +130,8 @@ body {
 }
 
 .brand-icon-box {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, var(--burgundy-primary), #4a0012);
   border-radius: var(--radius-md);
   display: flex;
@@ -140,7 +146,7 @@ body {
 }
 
 .brand-name {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.01em;
@@ -148,7 +154,7 @@ body {
 }
 
 .brand-tagline {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
 }
 
