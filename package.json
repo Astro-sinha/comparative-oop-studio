@@ -1,0 +1,37 @@
+{
+  "name": "comparative-oop-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Educational code editor for side-by-side Object-Oriented Programming comparison in C++, Java, and Python",
+  "main": "dist-electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "build:electron": "tsc && vite build && tsc -p tsconfig.electron.json",
+    "dev:electron": "concurrently \"vite\" \"wait-on tcp:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "package:mac": "npm run build:electron && electron-builder --mac",
+    "package:win": "npm run build:electron && electron-builder --win"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "lucide-react": "^0.475.0",
+    "monaco-editor": "^0.52.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "wait-on": "^8.0.2"
+  }
+}
